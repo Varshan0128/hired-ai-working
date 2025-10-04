@@ -168,7 +168,7 @@ const TemplateSelection: React.FC<TemplateSelectionProps> = ({
                 onMouseEnter={() => setShow(template.id)}
                 onMouseLeave={() => setShow(null)}
                 onTouchStart={() => setShow(template.id)}
-                onTouchEnd={() => setTimeout(() => setShowReturnHome(null), 2000)}
+                onTouchEnd={() => setTimeout(() => setShow(null), 2000)}
               >
                 <div className="relative">
                   <img 
