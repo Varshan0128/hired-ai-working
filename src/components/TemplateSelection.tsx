@@ -44,7 +44,7 @@ const TemplateSelection: React.FC<TemplateSelectionProps> = ({
   
     if (template) {
       applyTemplateStyles(id);
-      toast.success("${template.name}" template selected);
+      toast.success('"${template.name}" template selected');
   
       // ✅ This line moves to the editing page (step 2)
       onNext();
