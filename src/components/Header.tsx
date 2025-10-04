@@ -24,7 +24,6 @@ const Header: React.FC = () => {
   
   const navItems = [
     { name: 'Home', path: '/home' },
-    { name: 'Resume Builder', path: '/builder' },
     { name: 'Templates', path: '/templates' },
     { name: 'Interview Prep', path: '/interview-prep' },
     { name: 'Learning Path', path: '/ats-score' },
