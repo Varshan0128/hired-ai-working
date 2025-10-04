@@ -53,24 +53,30 @@ const TemplateSelection: React.FC<TemplateSelectionProps> = ({
   
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (selectedLatex !== null) {
-      updateData({ selectedTemplate: `latex:${selectedLatex}` });
-      toast.success(`Template "${LATEX_TEMPLATES.find(t=>t.id===selectedLatex)?.name}" confirmed`);
-      onNext();
-      return;
-    }
-    if (selectedTemplate !== null) {
-      const selectedTemplateObj = getTemplateById(selectedTemplate);
-      updateData({ 
-        selectedTemplate: selectedTemplate.toString(),
-        templateStyles: {
-          primaryColor: selectedTemplateObj?.primaryColor,
-          secondaryColor: selectedTemplateObj?.secondaryColor,
-          fontFamily: selectedTemplateObj?.fontFamily
-        }
-      });
-      toast.success(`Template "${selectedTemplateObj?.name}" confirmed for your resume`);
-      onNext();
+  
+    if (selectedTemplate !== null || selectedLatex !== null) {
+      const selectedTemplateObj =
+        selectedTemplate !== null
+          ? getTemplateById(selectedTemplate)
+          : LATEX_TEMPLATES.find((t) => t.id === selectedLatex);
+  
+      if (selectedTemplateObj) {
+        // save selected template data
+        updateData({
+          selectedTemplate:
+            selectedTemplate !== null
+              ? selectedTemplate.toString()
+              : latex:${selectedLatex},
+          templateStyles: {
+            primaryColor: selectedTemplateObj?.primaryColor,
+            secondaryColor: selectedTemplateObj?.secondaryColor,
+            fontFamily: selectedTemplateObj?.fontFamily,
+          },
+        });
+  
+        toast.success("${selectedTemplateObj?.name}" template confirmed);
+        navigate("/builder?step=2");
+      }
     } else {
       toast.error("Please select a template to continue");
     }
