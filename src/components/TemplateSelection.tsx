@@ -64,9 +64,9 @@ const TemplateSelection: React.FC<TemplateSelectionProps> = ({
         // save selected template data
         updateData({
           selectedTemplate:
-            selectedTemplate !== null
+            selectedTemplate != null
               ? selectedTemplate.toString()
-              : latex:${selectedLatex},
+              : 'latex:${selectedLatex}',
           templateStyles: {
             primaryColor: selectedTemplateObj?.primaryColor,
             secondaryColor: selectedTemplateObj?.secondaryColor,
