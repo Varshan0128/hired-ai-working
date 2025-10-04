@@ -156,6 +156,32 @@ a {
   @apply text-gray-100;
 }
 
+/* Ensure all text elements are theme-aware */
+.dark span, .dark div, .dark label {
+  @apply text-gray-300;
+}
+
+/* Dark mode for specific elements that might have hardcoded colors */
+.dark .text-black {
+  @apply text-gray-100;
+}
+
+.dark .text-gray-900 {
+  @apply text-gray-100;
+}
+
+.dark .bg-white {
+  @apply bg-gray-800;
+}
+
+.dark .bg-gray-50 {
+  @apply bg-gray-900;
+}
+
+.dark .bg-gray-100 {
+  @apply bg-gray-800;
+}
+
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
