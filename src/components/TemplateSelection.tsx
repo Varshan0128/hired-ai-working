@@ -41,10 +41,13 @@ const TemplateSelection: React.FC<TemplateSelectionProps> = ({
   const handleTemplateSelect = (id: number) => {
     setSelectedTemplate(id);
     const template = getTemplateById(id);
+  
     if (template) {
-      // Apply template styles to the document
       applyTemplateStyles(id);
-      toast.success(`"${template.name}" template selected`);
+      toast.success("${template.name}" template selected);
+  
+      // ✅ Go directly to the next section (resume editing)
+      onNext();
     }
   };
   
