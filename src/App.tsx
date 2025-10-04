@@ -36,6 +36,7 @@ function App() {
   return (
     <div className="App"> {/* Optional: A wrapper div for styling, e.g., with global flexbox or padding */}
       <Routes>
+        <Route path="/home" element={<Index />} />
         <Route path="/" element={<Index />} />
         <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
         <Route path="/builder" element={<ProtectedRoute><Builder /></ProtectedRoute>} />
