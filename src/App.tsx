@@ -42,7 +42,7 @@ function App() {
         <Route path="/builder" element={<ProtectedRoute><Builder /></ProtectedRoute>} />
         <Route path="/applications" element={<ProtectedRoute><ApplicationTracker /></ProtectedRoute>} />
         <Route path="/interview-prep" element={<ProtectedRoute><InterviewPrep /></ProtectedRoute>} />
-        <Route path="/ats-score" element={<ProtectedRoute><LearningPath /></ProtectedRoute>} />
+        <Route path="/ATS-score" element={<ProtectedRoute><LearningPath /></ProtectedRoute>} />
         <Route path="/templates" element={<Templates />} />
         <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
         <Route path="/auth" element={<Auth />} />

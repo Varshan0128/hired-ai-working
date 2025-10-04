@@ -2,7 +2,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import Header from '@/components/Header';
-import ATSScoreCalculator from '@/components/ats/ATSScoreCalculator';
+import EnhancedATSScoreCalculator from '@/components/ats/EnhancedATSScoreCalculator';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BarChart3, CheckCircle, AlertTriangle, Target } from 'lucide-react';
 
@@ -10,23 +10,23 @@ const ATSScore = () => {
   const features = [
     {
       icon: BarChart3,
-      title: "ATS Compatibility Score",
-      description: "Get a detailed score showing how well your resume performs with ATS systems"
+      title: "Advanced ATS Scoring",
+      description: "Professional-grade analysis with weighted scoring: Skills (40%), Experience (30%), Education (15%), Formatting (15%)"
     },
     {
       icon: CheckCircle,
-      title: "Keyword Analysis",
-      description: "Identify missing keywords and optimize your content for better matching"
+      title: "NLP-Powered Analysis",
+      description: "Semantic similarity matching and intelligent keyword extraction using advanced text processing"
     },
     {
       icon: AlertTriangle,
-      title: "Format Issues",
-      description: "Detect formatting problems that could prevent ATS systems from reading your resume"
+      title: "Format Optimization",
+      description: "Detect ATS-unfriendly elements like tables, images, and headers that could hurt your chances"
     },
     {
       icon: Target,
-      title: "Improvement Suggestions",
-      description: "Get actionable recommendations to boost your resume's ATS performance"
+      title: "Smart Recommendations",
+      description: "Get specific, actionable suggestions based on missing keywords and content gaps"
     }
   ];
 
@@ -48,11 +48,11 @@ const ATSScore = () => {
             </div>
             
             <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
-              ATS Score <span className="text-gradient">Analyzer</span>
+              Advanced ATS <span className="text-gradient">Analyzer</span>
             </h1>
             
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-              Optimize your resume for Applicant Tracking Systems (ATS) and increase your chances of getting past the initial screening.
+              Professional-grade ATS analysis with NLP-powered semantic matching, weighted scoring, and intelligent recommendations to maximize your resume's ATS compatibility.
             </p>
           </motion.div>
 
@@ -92,7 +92,7 @@ const ATSScore = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-0">
-                <ATSScoreCalculator />
+                <EnhancedATSScoreCalculator />
               </CardContent>
             </Card>
           </motion.div>

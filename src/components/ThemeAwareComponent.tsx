@@ -1,5 +1,4 @@
-import React from 'react';
-import { useTheme } from 'next-themes';
+import React, { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 
 interface ThemeAwareComponentProps {
@@ -15,7 +14,36 @@ const ThemeAwareComponent: React.FC<ThemeAwareComponentProps> = ({
   lightModeClasses = '',
   darkModeClasses = ''
 }) => {
-  const { theme } = useTheme();
+  const [theme, setTheme] = useState<'light' | 'dark'>('light');
+
+  useEffect(() => {
+    // Get theme from localStorage or default to 'light'
+    const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' | null;
+    const initialTheme = savedTheme || 'light';
+    setTheme(initialTheme);
+    
+    // Listen for theme changes
+    const handleStorageChange = () => {
+      const newTheme = localStorage.getItem('theme') as 'light' | 'dark' | null;
+      if (newTheme) {
+        setTheme(newTheme);
+      }
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    
+    // Also listen for custom theme change events
+    const handleThemeChange = (event: CustomEvent) => {
+      setTheme(event.detail.theme);
+    };
+    
+    window.addEventListener('themeChange', handleThemeChange as EventListener);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('themeChange', handleThemeChange as EventListener);
+    };
+  }, []);
 
   return (
     <div

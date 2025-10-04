@@ -322,7 +322,7 @@ const TemplateSelection: React.FC<TemplateSelectionProps> = ({
               <h3 className="text-xl font-semibold mb-4">{previewTemplate.name} Preview</h3>
               <div className="relative overflow-hidden rounded-lg border shadow-md">
                 {/* Show the actual template preview with placeholder data */}
-                <div className="p-6 bg-white text-black">
+                <div className="p-6 bg-white dark:bg-gray-800 text-black dark:text-white">
                   {previewTemplate.content ? (
                     <div
                       dangerouslySetInnerHTML={{

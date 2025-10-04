@@ -107,11 +107,53 @@
   font-feature-settings: "cv11", "ss01";
 }
 
+/* Global theme transition styles */
+* {
+  transition: background-color 300ms ease-in-out, 
+              border-color 300ms ease-in-out, 
+              color 300ms ease-in-out,
+              box-shadow 300ms ease-in-out;
+}
+
+/* Ensure smooth transitions for all theme-related properties */
+html {
+  transition: background-color 300ms ease-in-out;
+}
+
 body {
   @apply bg-background text-foreground font-poppins;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
+  transition: background-color 300ms ease-in-out, color 300ms ease-in-out;
+}
+
+/* Ensure all headings inherit proper colors */
+h1, h2, h3, h4, h5, h6 {
+  @apply font-poppins font-semibold text-foreground;
+}
+
+/* Ensure paragraphs inherit proper colors */
+p {
+  @apply text-foreground;
+}
+
+/* Ensure links inherit proper colors */
+a {
+  @apply text-foreground;
+}
+
+/* Dark mode specific overrides */
+.dark h1, .dark h2, .dark h3, .dark h4, .dark h5, .dark h6 {
+  @apply text-gray-100;
+}
+
+.dark p {
+  @apply text-gray-300;
+}
+
+.dark a {
+  @apply text-gray-100;
 }
 
 /* Custom scrollbar */

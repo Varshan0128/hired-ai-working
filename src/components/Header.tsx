@@ -27,7 +27,7 @@ const Header: React.FC = () => {
     { name: 'Resume Builder', path: '/builder' },
     { name: 'Templates', path: '/templates' },
     { name: 'Interview Prep', path: '/interview-prep' },
-    { name: 'ATS Score', path: '/ats-score' },
+    { name: 'Learning Path', path: '/ats-score' },
   ];
   
   useEffect(() => {
