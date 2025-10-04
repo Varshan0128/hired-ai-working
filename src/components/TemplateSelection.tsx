@@ -56,31 +56,33 @@ const TemplateSelection: React.FC<TemplateSelectionProps> = ({
   
     if (selectedTemplate !== null || selectedLatex !== null) {
       const selectedTemplateObj =
-        selectedTemplate !== null
-          ? getTemplateById(selectedTemplate)
-          : LATEX_TEMPLATES.find((t) => t.id === selectedLatex);
+        selectedTemplate !== null ? getTemplateById(selectedTemplate) : null;
   
-      if (selectedTemplateObj) {
-        // save selected template data
-        updateData({
-          selectedTemplate:
-            selectedTemplate != null
-              ? selectedTemplate.toString()
-              : 'latex:${selectedLatex}',
-          templateStyles: {
-            primaryColor: selectedTemplateObj?.primaryColor,
-            secondaryColor: selectedTemplateObj?.secondaryColor,
-            fontFamily: selectedTemplateObj?.fontFamily,
-          },
-        });
+      // ✅ Save selected template
+      updateData({
+        selectedTemplate:
+          selectedTemplate !== null
+            ? selectedTemplate.toString()
+            : `latex:${selectedLatex}`, // <-- backticks used here
+        templateStyles: {
+          primaryColor: selectedTemplateObj?.primaryColor,
+          secondaryColor: selectedTemplateObj?.secondaryColor,
+          fontFamily: selectedTemplateObj?.fontFamily,
+        },
+      });
   
-        toast.success("${selectedTemplateObj?.name}" template confirmed);
-        navigate("/builder?step=2");
-      }
+      // ✅ Toast confirmation
+      toast.success(
+        `${selectedTemplateObj ? selectedTemplateObj.name : "LaTeX Template"} confirmed`
+      );
+  
+      // ✅ Move directly to editing section (Step 2)
+      navigate("/builder?step=2");
     } else {
       toast.error("Please select a template to continue");
     }
   };
+  
 
   const openPreview = (template: typeof templates[0], e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
