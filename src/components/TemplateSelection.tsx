@@ -83,6 +83,7 @@ const TemplateSelection: React.FC<TemplateSelectionProps> = ({
     }
   };
   
+  
 
   const openPreview = (template: typeof templates[0], e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
