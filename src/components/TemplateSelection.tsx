@@ -165,9 +165,9 @@ const TemplateSelection: React.FC<TemplateSelectionProps> = ({
                     : 'hover:border-primary/50'
                 }`}
                 onClick={() => handleTemplateSelect(template.id)}
-                onMouseEnter={() => setShowReturnHome(template.id)}
-                onMouseLeave={() => setShowReturnHome(null)}
-                onTouchStart={() => setShowReturnHome(template.id)}
+                onMouseEnter={() => setShow(template.id)}
+                onMouseLeave={() => setShow(null)}
+                onTouchStart={() => setShow(template.id)}
                 onTouchEnd={() => setTimeout(() => setShowReturnHome(null), 2000)}
               >
                 <div className="relative">
