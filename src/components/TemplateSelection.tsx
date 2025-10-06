@@ -58,12 +58,12 @@ const TemplateSelection: React.FC<TemplateSelectionProps> = ({
       const selectedTemplateObj =
         selectedTemplate !== null ? getTemplateById(selectedTemplate) : null;
   
-      // ✅ Save selected template
+      // ✅ Save selected template data
       updateData({
         selectedTemplate:
           selectedTemplate !== null
             ? selectedTemplate.toString()
-            : `latex:${selectedLatex}`, // <-- backticks used here
+            : `latex:${selectedLatex}`,
         templateStyles: {
           primaryColor: selectedTemplateObj?.primaryColor,
           secondaryColor: selectedTemplateObj?.secondaryColor,
@@ -71,17 +71,17 @@ const TemplateSelection: React.FC<TemplateSelectionProps> = ({
         },
       });
   
-      // ✅ Toast confirmation
       toast.success(
-        `${selectedTemplateObj ? selectedTemplateObj.name : "LaTeX Template"} confirmed`
+        `${selectedTemplateObj ? selectedTemplateObj.name : "Template"} selected successfully`
       );
   
-      // ✅ Move directly to editing section (Step 2)
-      navigate("/builder?step=2");
+      // ✅ Move directly to Builder Step 2 (Live Editor)
+      navigate("/builder", { state: { goToStep: 2 } });
     } else {
       toast.error("Please select a template to continue");
     }
   };
+  
   
   
 

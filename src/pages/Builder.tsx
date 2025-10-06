@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from 'framer-motion';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import Header from '@/components/Header';
 import StepIndicator from '@/components/StepIndicator';
 import PersonalInfoForm from '@/components/PersonalInfoForm';
@@ -132,18 +132,7 @@ const getInitialResumeData = (): ResumeData => {
 
 const Builder = () => {
   const [currentStep, setCurrentStep] = useState(1);
-  // ✅ This will read "?step=2" from the URL and directly jump to that step
-const [searchParams] = useSearchParams();
-
-useEffect(() => {
-  const stepParam = searchParams.get("step");
-  if (stepParam) {
-    const stepNumber = parseInt(stepParam);
-    if (!isNaN(stepNumber) && stepNumber >= 1 && stepNumber <= totalSteps) {
-      setCurrentStep(stepNumber);
-    }
-  }
-}, [searchParams]);
+  
   const totalSteps = 4;
   const breakpoint = useBreakpoint();
   const isMobileView = breakpoint === 'mobile';
