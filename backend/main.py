@@ -1,45 +1,99 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, Query
+from fastapi.middleware.cors import CORSMiddleware
 import pandas as pd
 import os
+from sklearn.preprocessing import LabelEncoder
 
-app = FastAPI(title="Hired AI - Learning Path API", version="1.0")
+# Initialize FastAPI app
+app = FastAPI(title="Hired AI - Learning Path Engine", version="1.0")
 
-# --- Base Path ---
-BASE = os.path.dirname(__file__)
-DATA_PATH = os.path.join(BASE, "data")
+# Allow frontend connections
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-# --- Read CSV Files ---
-try:
-    learning_path = pd.read_csv(os.path.join(DATA_PATH, "learning_path_core.csv"))
-    psych_questions = pd.read_csv(os.path.join(DATA_PATH, "psychological_questions.csv"))
-    skill_map = pd.read_csv(os.path.join(DATA_PATH, "skill_mapping.csv"))
-    courses = pd.read_csv(os.path.join(DATA_PATH, "course_catalog.csv"))
-except Exception as e:
-    print(f"Error loading datasets: {e}")
+# Base directories
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DATASET_DIR = os.path.join(BASE_DIR, "datasets")
+DATA_DIR = os.path.join(BASE_DIR, "data")
 
-# --- Routes ---
+# Helper to safely read CSV
+def read_csv(file_name, folder="datasets"):
+    path = os.path.join(BASE_DIR, folder, file_name)
+    if os.path.exists(path):
+        return pd.read_csv(path, encoding="utf-8", on_bad_lines="skip")
+    else:
+        raise FileNotFoundError(f"{file_name} not found in {folder}/")
+
 @app.get("/")
 def root():
-    return {"message": "Backend is running 🚀"}
+    return {"message": "Learning Path Engine is running 🚀"}
 
-@app.get("/check-datasets")
-def check_datasets():
-    """Check if datasets are properly loaded"""
+# ✅ Check if all dataset files exist
+@app.get("/check-data")
+def check_data():
     try:
+        files = os.listdir(DATASET_DIR)
+        return {"available_datasets": files, "total": len(files)}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ✅ Predict learning style based on psychological answers
+@app.post("/predict-learning-path/")
+def predict_learning_path(user_answers: dict):
+    """
+    Accepts user's 10 psychological answers and classifies them into a learning style.
+    """
+    try:
+        score = sum(user_answers.values())
+
+        if score <= 20:
+            category = "Short"
+        elif score <= 35:
+            category = "Elaborate"
+        else:
+            category = "Realistic"
+
         return {
-            "learning_path_rows": len(learning_path),
-            "psychological_questions_rows": len(psych_questions),
-            "skill_map_rows": len(skill_map),
-            "courses_rows": len(courses),
+            "user_category": category,
+            "message": f"User is classified as a {category} learner.",
+            "next_step": f"Fetch course recommendations using /learning-path/{{course_name}}?mode={category}"
         }
-    except Exception as e:
-        return {"error": str(e)}
 
-@app.get("/get-questions")
-def get_questions():
-    """Returns a few sample psychological questions"""
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+# ✅ Fetch course content from datasets
+@app.get("/learning-path/{course_name}")
+def get_learning_path(course_name: str, mode: str = Query("Elaborate", enum=["Short", "Elaborate", "Realistic"])):
+    """
+    Return learning content from dataset based on user-selected mode.
+    """
     try:
-        return psych_questions.sample(5).to_dict(orient="records")
-    except Exception as e:
-        return {"error": str(e)}
+        file_path = os.path.join(DATASET_DIR, f"{course_name}_learning.csv")
+        if not os.path.exists(file_path):
+            raise HTTPException(status_code=404, detail=f"Dataset for '{course_name}' not found")
 
+        df = pd.read_csv(file_path, encoding="utf-8", on_bad_lines="skip")
+
+        # Filter content based on mode
+        if mode == "Short":
+            df = df.sample(frac=0.5, random_state=42)
+        elif mode == "Realistic":
+            df = df[df['difficulty'].isin(["Intermediate", "Advanced"])]
+
+        data = df.to_dict(orient="records")
+
+        return {
+            "course_name": course_name.replace("_", " ").title(),
+            "learning_mode": mode,
+            "total_modules": len(data),
+            "content": data
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
