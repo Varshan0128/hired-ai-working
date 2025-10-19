@@ -7,8 +7,9 @@ import PsychologyTest from '@/components/psychology/PsychologyTest';
 import TestResults from '@/components/psychology/TestResults';
 import { motion } from 'framer-motion';
 import { BookOpen, Code, Brain, Loader2 } from 'lucide-react';
+import { getBackendBase } from '@/utils/getBackendBase';
 
-const API_BASE = "http://127.0.0.1:8000";
+const API_BASE = getBackendBase() || "http://127.0.0.1:8000";
 
 const LearningPath: React.FC = () => {
   const navigate = useNavigate();

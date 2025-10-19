@@ -8,6 +8,8 @@ import { toast } from "sonner";
 import { FloatingLabelInput } from "@/components/FloatingLabelInput";
 import GradientButton from "@/components/GradientButton";
 import { useAuth } from '@/context/AuthContext';
+import { getCreateUserUrl } from '@/utils/getBackendBase';
+import { supabase } from '@/integrations/supabase/client';
 
 // Debug flag for development
 const DEBUG_SIGNUP = true; // set false later for production
@@ -67,50 +69,74 @@ const Auth = () => {
   };
   
   const handleSignup = async (e: React.FormEvent) => {
-    // ensure we prevent default page reloads
     if (e && typeof e.preventDefault === "function") e.preventDefault();
 
-    setError(null);
-    setSuccess(null);
-    setIsLoading(true);
-    
+    if (typeof setError === "function") setError(null);
+    if (typeof setSuccess === "function") setSuccess(null);
+    if (typeof setIsLoading === "function") setIsLoading(true);
+
     try {
       // Basic validation
       if (formData.password !== formData.confirmPassword) {
-        setError("Passwords don't match!");
+        if (typeof setError === "function") setError("Passwords don't match!");
         return;
       }
 
       if (!formData.email || !formData.password) {
-        setError("Please enter email and password.");
+        if (typeof setError === "function") setError("Please enter email and password.");
         return;
       }
 
-      const payload = { email: formData.email, password: formData.password };
-      console.log('[Signup] payload:', payload);
+      const payload = { email: formData.email.trim(), password: formData.password };
+      console.log("[Signup] payload:", payload);
 
-      const { error, requiresEmailConfirmation } = await signup(formData.email, formData.password);
-      
-      if (error) {
-        setError(error.message || "Signup failed");
-        toast.error(error.message || "Signup failed");
-      } else {
-        if (requiresEmailConfirmation) {
-          setSuccess("Account created! Please check your email to verify your account.");
-          toast.success("Account created! Please check your email to verify your account.");
-        } else {
-          setSuccess("Account created successfully! You are now logged in.");
-          toast.success("Account created successfully! You are now logged in.");
-          // Navigate only on success
-          setTimeout(() => navigate("/"), 1000);
+      // Try backend admin endpoint first
+      try {
+        const url = getCreateUserUrl();
+        console.log("[Signup] POST ->", url);
+        const res = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        let body = null;
+        try { body = await res.json(); } catch (_) {}
+
+        if (!res.ok) {
+          const message = body?.message || body?.detail || `Server error ${res.status || res.statusText}`;
+          if (typeof setError === "function") setError(message);
+          return; // keep the form on current step
         }
+
+        // success
+        if (typeof setSuccess === "function") setSuccess("Signup successful. Redirecting...");
+        setTimeout(() => navigate("/"), 1000);
+        return;
+      } catch (netErr) {
+        console.warn("[Signup] backend network error:", netErr);
+        if (typeof setError === "function") setError("Signup backend unreachable. Trying fallback signup...");
+        // continue to fallback
       }
-    } catch (error) {
-      console.error('[Signup] unexpected error:', error);
-      setError("An unexpected error occurred");
-      toast.error("An unexpected error occurred");
+
+      // Fallback: supabase client signUp (if available)
+      if (typeof supabase !== "undefined" && supabase?.auth?.signUp) {
+        const { data, error: supError } = await supabase.auth.signUp({ email: formData.email.trim(), password: formData.password });
+        console.log("[Signup] supabase fallback:", data, supError);
+        if (supError) {
+          if (typeof setError === "function") setError(supError.message || "Fallback signup failed.");
+          return;
+        }
+        if (typeof setSuccess === "function") setSuccess("Signup successful (fallback). Check your email for confirmation.");
+        setTimeout(() => navigate("/"), 1000);
+        return;
+      } else {
+        if (typeof setError === "function") setError("No signup method available. Contact support.");
+      }
+    } catch (err) {
+      console.error("[Signup] unexpected:", err);
+      if (typeof setError === "function") setError("Unexpected error during signup. See console.");
     } finally {
-      setIsLoading(false);
+      if (typeof setIsLoading === "function") setIsLoading(false);
     }
   };
   
@@ -297,10 +323,10 @@ const Auth = () => {
 
                   {/* Debug Panel */}
                   {DEBUG_SIGNUP && (
-                    <div style={{ fontSize: 12, marginTop: 8, color: "#ccc" }}>
+                    <div style={{ fontSize: 12, marginTop: 8, color: "#ddd" }}>
                       <div>DEBUG_SIGNUP ON</div>
-                      <div>Backend target: {(process.env?.REACT_APP_BACKEND_URL) || "relative /api/admin/create-user"}</div>
-                      <div>Last status: {isLoading ? "loading..." : error ? `error: ${error}` : success ? "success" : "idle"}</div>
+                      <div>Backend URL: {getCreateUserUrl()}</div>
+                      <div>State: {isLoading ? "loading..." : error ? `error: ${error}` : success ? "success" : "idle"}</div>
                     </div>
                   )}
                 </div>

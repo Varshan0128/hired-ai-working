@@ -2,16 +2,12 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { User as SupabaseUser, Session } from '@supabase/supabase-js';
-
-// Robust backend API configuration: uses env var if present, otherwise relative path
-const BACKEND_BASE = (typeof process !== "undefined" && process.env?.REACT_APP_BACKEND_URL)
-  ? process.env.REACT_APP_BACKEND_URL.replace(/\/$/, "")
-  : ""; // empty -> use relative path
+import { getCreateUserUrl } from '@/utils/getBackendBase';
 
 // Robust backend call function
 async function createUserViaBackend({ email, password }: { email: string; password: string }) {
   // Build URL: if BACKEND_BASE is empty, this becomes /api/admin/create-user (same origin)
-  const url = `${BACKEND_BASE}/api/admin/create-user`.replace(/(^\/+)?/, "/");
+  const url = getCreateUserUrl();
   console.log("[Signup] attempting backend create at:", url);
 
   let res;
