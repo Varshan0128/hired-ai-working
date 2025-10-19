@@ -3,10 +3,48 @@ import React, { createContext, useState, useEffect, useContext } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { User as SupabaseUser, Session } from '@supabase/supabase-js';
 
-// Backend API configuration
-const BACKEND_URL = process.env.NODE_ENV === 'production' 
-  ? 'https://your-backend-domain.com' // Update this for production
-  : 'http://127.0.0.1:8000';
+// Robust backend API configuration: uses env var if present, otherwise relative path
+const BACKEND_BASE = (typeof process !== "undefined" && process.env?.REACT_APP_BACKEND_URL)
+  ? process.env.REACT_APP_BACKEND_URL.replace(/\/$/, "")
+  : ""; // empty -> use relative path
+
+// Robust backend call function
+async function createUserViaBackend({ email, password }: { email: string; password: string }) {
+  // Build URL: if BACKEND_BASE is empty, this becomes /api/admin/create-user (same origin)
+  const url = `${BACKEND_BASE}/api/admin/create-user`.replace(/(^\/+)?/, "/");
+  console.log("[Signup] attempting backend create at:", url);
+
+  let res;
+  try {
+    res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: email.trim(), password }),
+    });
+  } catch (err) {
+    // Network-level error (e.g. ERR_CONNECTION_REFUSED)
+    console.error("[Signup] network error calling backend create-user:", err);
+    throw new Error("BACKEND_UNREACHABLE");
+  }
+
+  // parse JSON safely
+  let body = null;
+  try {
+    body = await res.json();
+  } catch (parseErr) {
+    console.warn("[Signup] could not parse JSON response:", parseErr);
+  }
+
+  if (!res.ok) {
+    const msg = body?.message || body?.detail || `Backend Error: ${res.status}`;
+    const err = new Error(msg);
+    (err as any).serverBody = body;
+    (err as any).status = res.status;
+    throw err;
+  }
+
+  return body; // expected shape: { ok: true, user: {...} }
+}
 
 export interface User {
   id: string;
@@ -139,26 +177,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // -------------------------
   const signup = async (email: string, password: string) => {
     try {
-      // Try backend endpoint first to create user with confirmed email
-      console.log('Attempting to create user via backend:', BACKEND_URL);
-      
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
-      
-      const response = await fetch(`${BACKEND_URL}/api/admin/create-user`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-        signal: controller.signal,
-      });
+      if (!email || !password) {
+        return { error: new Error("Please enter email and password.") };
+      }
 
-      clearTimeout(timeoutId);
+      const payload = { email, password };
+      console.log('[Signup] payload:', payload);
 
-      if (response.ok) {
-        const data = await response.json();
-        console.log('Backend signup successful:', data);
+      // Try backend first
+      try {
+        const backendResp = await createUserViaBackend(payload);
+        console.log('[Signup] backendResp:', backendResp);
         
         // Now sign in the user automatically since email is already confirmed
         const { error: signInError } = await supabase.auth.signInWithPassword({
@@ -172,42 +201,42 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
 
         return { error: null };
-      } else {
-        // Backend failed, fall back to regular Supabase signup
-        console.warn('Backend signup failed, falling back to regular signup');
-        return await fallbackSignup(email, password);
-      }
-    } catch (err) {
-      console.warn('Backend unavailable, falling back to regular signup:', err);
-      // Backend is not available, fall back to regular Supabase signup
-      return await fallbackSignup(email, password);
-    }
-  };
-
-  // Fallback signup using regular Supabase (will require email confirmation)
-  const fallbackSignup = async (email: string, password: string) => {
-    try {
-      console.log('Using fallback signup method');
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: window.location.origin + '/auth',
-        },
-      });
-
-      if (error) {
-        console.error('Fallback signup error:', error);
-        return { error };
+      } catch (backendErr: any) {
+        console.warn('[Signup] backend error:', backendErr?.message || backendErr);
+        // If backend unreachable explicitly, try fallback signup
+        if (backendErr.message === "BACKEND_UNREACHABLE") {
+          console.log('[Signup] Backend unreachable, trying fallback signup...');
+        } else {
+          // backend returned 4xx/5xx — present server message but do not reset step
+          console.log('[Signup] Backend server error, trying fallback signup...');
+        }
+        // Continue to fallback to client signup
       }
 
-      console.log('Fallback signup successful:', data);
-      return { error: null, requiresEmailConfirmation: true };
+      // fallback: use existing client-side signup (e.g., supabase.auth.signUp)
+      try {
+        const { data, error: supError } = await supabase.auth.signUp({ 
+          email: email.trim(), 
+          password,
+          options: {
+            emailRedirectTo: window.location.origin + '/auth',
+          },
+        });
+        console.log('[Signup] fallback supabase response:', data, supError);
+        if (supError) {
+          return { error: new Error(supError.message || 'Signup fallback failed.') };
+        }
+        return { error: null, requiresEmailConfirmation: true };
+      } catch (err) {
+        console.error('[Signup] fallback exception:', err);
+        return { error: new Error('An unexpected error occurred during signup.') };
+      }
     } catch (err) {
-      console.error('Fallback signup error:', err);
+      console.error('[Signup] unexpected error:', err);
       return { error: err };
     }
   };
+
 
   // -------------------------
   // Login: validate credentials and session

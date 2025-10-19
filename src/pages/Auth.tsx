@@ -9,9 +9,14 @@ import { FloatingLabelInput } from "@/components/FloatingLabelInput";
 import GradientButton from "@/components/GradientButton";
 import { useAuth } from '@/context/AuthContext';
 
+// Debug flag for development
+const DEBUG_SIGNUP = true; // set false later for production
+
 const Auth = () => {
   const [activeTab, setActiveTab] = useState<string>("login");
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -62,31 +67,47 @@ const Auth = () => {
   };
   
   const handleSignup = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    // Basic validation
-    if (formData.password !== formData.confirmPassword) {
-      toast.error("Passwords don't match!");
-      return;
-    }
-    
+    // ensure we prevent default page reloads
+    if (e && typeof e.preventDefault === "function") e.preventDefault();
+
+    setError(null);
+    setSuccess(null);
     setIsLoading(true);
     
     try {
+      // Basic validation
+      if (formData.password !== formData.confirmPassword) {
+        setError("Passwords don't match!");
+        return;
+      }
+
+      if (!formData.email || !formData.password) {
+        setError("Please enter email and password.");
+        return;
+      }
+
+      const payload = { email: formData.email, password: formData.password };
+      console.log('[Signup] payload:', payload);
+
       const { error, requiresEmailConfirmation } = await signup(formData.email, formData.password);
       
       if (error) {
+        setError(error.message || "Signup failed");
         toast.error(error.message || "Signup failed");
       } else {
         if (requiresEmailConfirmation) {
+          setSuccess("Account created! Please check your email to verify your account.");
           toast.success("Account created! Please check your email to verify your account.");
         } else {
+          setSuccess("Account created successfully! You are now logged in.");
           toast.success("Account created successfully! You are now logged in.");
-          navigate("/");
+          // Navigate only on success
+          setTimeout(() => navigate("/"), 1000);
         }
       }
     } catch (error) {
-      console.error('Signup error:', error);
+      console.error('[Signup] unexpected error:', error);
+      setError("An unexpected error occurred");
       toast.error("An unexpected error occurred");
     } finally {
       setIsLoading(false);
@@ -261,6 +282,27 @@ const Auth = () => {
                   >
                     Create Account
                   </GradientButton>
+
+                  {/* Error/Success Display */}
+                  {error && (
+                    <div className="text-red-500 text-sm mt-2 p-2 bg-red-50 rounded">
+                      {error}
+                    </div>
+                  )}
+                  {success && (
+                    <div className="text-green-500 text-sm mt-2 p-2 bg-green-50 rounded">
+                      {success}
+                    </div>
+                  )}
+
+                  {/* Debug Panel */}
+                  {DEBUG_SIGNUP && (
+                    <div style={{ fontSize: 12, marginTop: 8, color: "#ccc" }}>
+                      <div>DEBUG_SIGNUP ON</div>
+                      <div>Backend target: {(process.env?.REACT_APP_BACKEND_URL) || "relative /api/admin/create-user"}</div>
+                      <div>Last status: {isLoading ? "loading..." : error ? `error: ${error}` : success ? "success" : "idle"}</div>
+                    </div>
+                  )}
                 </div>
               </form>
               

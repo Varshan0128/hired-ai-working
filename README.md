@@ -67,3 +67,21 @@ Simply open [Lovable](https://lovable.dev/projects/6dd0d20d-e556-467e-84bc-a4ee7
 ## I want to use a custom domain - is that possible?
 
 We don't support custom domains (yet). If you want to deploy your project under your own domain then we recommend using Netlify. Visit our docs for more details: [Custom domains](https://docs.lovable.dev/tips-tricks/custom-domain/)
+
+## Dev notes to run backend locally
+
+Ensure you run your backend so the frontend can call it.
+
+Example (FastAPI):
+```bash
+cd backend
+uvicorn main:app --reload --port 8000
+```
+
+Required env:
+```bash
+SUPABASE_URL="https://<project>.supabase.co"
+SUPABASE_SERVICE_ROLE="<service_role_key_here>"
+```
+
+If you don't run backend, the frontend will call relative `/api/admin/create-user` which must be proxied to backend in your dev server (setup proxy in package.json or run both on same origin).
