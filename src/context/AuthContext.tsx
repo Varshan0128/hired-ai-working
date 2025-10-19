@@ -32,7 +32,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<{ error: any }>;
-  signup: (email: string, password: string) => Promise<{ error: any }>;
+  signup: (email: string, password: string) => Promise<{ error: any; requiresEmailConfirmation?: boolean }>;
   signInWithGoogle: () => Promise<{ error: any }>;
   logout: () => Promise<void>;
   updateProfile: (updates: { display_name: string }) => Promise<{ error: any }>;
@@ -135,43 +135,76 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // -------------------------
   // Admin signup: create user with confirmed email via backend
+  // Falls back to regular signup if backend is unavailable
   // -------------------------
   const signup = async (email: string, password: string) => {
     try {
-      // Call backend endpoint to create user with confirmed email
+      // Try backend endpoint first to create user with confirmed email
+      console.log('Attempting to create user via backend:', BACKEND_URL);
+      
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+      
       const response = await fetch(`${BACKEND_URL}/api/admin/create-user`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ email, password }),
+        signal: controller.signal,
       });
 
-      const data = await response.json();
+      clearTimeout(timeoutId);
 
-      if (!response.ok) {
-        console.error('Signup error:', data);
-        return { error: new Error(data.detail || 'Signup failed') };
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Backend signup successful:', data);
+        
+        // Now sign in the user automatically since email is already confirmed
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+
+        if (signInError) {
+          console.error('Auto sign-in error:', signInError);
+          return { error: new Error('Account created but automatic sign-in failed. Please try logging in.') };
+        }
+
+        return { error: null };
+      } else {
+        // Backend failed, fall back to regular Supabase signup
+        console.warn('Backend signup failed, falling back to regular signup');
+        return await fallbackSignup(email, password);
       }
+    } catch (err) {
+      console.warn('Backend unavailable, falling back to regular signup:', err);
+      // Backend is not available, fall back to regular Supabase signup
+      return await fallbackSignup(email, password);
+    }
+  };
 
-      // User created successfully with confirmed email
-      console.log('Signup result data:', data);
-      
-      // Now sign in the user automatically since email is already confirmed
-      const { error: signInError } = await supabase.auth.signInWithPassword({
+  // Fallback signup using regular Supabase (will require email confirmation)
+  const fallbackSignup = async (email: string, password: string) => {
+    try {
+      console.log('Using fallback signup method');
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          emailRedirectTo: window.location.origin + '/auth',
+        },
       });
 
-      if (signInError) {
-        console.error('Auto sign-in error:', signInError);
-        // User was created but we couldn't sign them in automatically
-        return { error: new Error('Account created but automatic sign-in failed. Please try logging in.') };
+      if (error) {
+        console.error('Fallback signup error:', error);
+        return { error };
       }
 
-      return { error: null };
+      console.log('Fallback signup successful:', data);
+      return { error: null, requiresEmailConfirmation: true };
     } catch (err) {
-      console.error('Unexpected signup error:', err);
+      console.error('Fallback signup error:', err);
       return { error: err };
     }
   };

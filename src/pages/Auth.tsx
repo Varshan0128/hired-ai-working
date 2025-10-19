@@ -73,16 +73,20 @@ const Auth = () => {
     setIsLoading(true);
     
     try {
-      const { error } = await signup(formData.email, formData.password);
+      const { error, requiresEmailConfirmation } = await signup(formData.email, formData.password);
       
       if (error) {
         toast.error(error.message || "Signup failed");
       } else {
-        toast.success("Account created successfully! You are now logged in.");
-        // Navigate to dashboard since user is automatically signed in
-        navigate("/");
+        if (requiresEmailConfirmation) {
+          toast.success("Account created! Please check your email to verify your account.");
+        } else {
+          toast.success("Account created successfully! You are now logged in.");
+          navigate("/");
+        }
       }
     } catch (error) {
+      console.error('Signup error:', error);
       toast.error("An unexpected error occurred");
     } finally {
       setIsLoading(false);
