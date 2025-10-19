@@ -4,11 +4,11 @@ from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
 
-# Add your frontend origin(s) here:
+# ✅ Allow both production (Vercel) and local dev
 origins = [
-    "https://hired-ai-working.vercel.app",  # replace with your actual Vercel URL
-    "http://localhost:3000",                 # frontend local dev (change port if needed)
-    "http://127.0.0.1:3000",
+    "https://hired-ai-working.vercel.app",  # your Vercel frontend URL
+    "http://localhost:5173",                # local dev (Vite default)
+    "http://127.0.0.1:5173",                # local dev (optional)
 ]
 
 app.add_middleware(
@@ -18,7 +18,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
 
 @app.get("/")
 def read_root():
