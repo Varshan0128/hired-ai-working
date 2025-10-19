@@ -78,8 +78,9 @@ const Auth = () => {
       if (error) {
         toast.error(error.message || "Signup failed");
       } else {
-        toast.success("Account created successfully! Please check your email to verify your account.");
-        // Don't navigate immediately for email verification
+        toast.success("Account created successfully! You are now logged in.");
+        // Navigate to dashboard since user is automatically signed in
+        navigate("/");
       }
     } catch (error) {
       toast.error("An unexpected error occurred");

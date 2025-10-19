@@ -1,7 +1,8 @@
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 import pandas as pd
 import os
+import httpx
 
 # -------------------------------------------------------------
 # 🚀 Initialize FastAPI app
@@ -182,3 +183,76 @@ def get_learning_path(
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to load course data: {str(e)}")
+
+# -------------------------------------------------------------
+# 🔐 Admin endpoint to create users with confirmed email
+# 
+# Required Environment Variables:
+# SUPABASE_URL=https://your-project.supabase.co
+# SUPABASE_SERVICE_ROLE=your-service-role-key-here
+# 
+# Get these from Supabase Dashboard -> Settings -> API
+# -------------------------------------------------------------
+@app.post("/api/admin/create-user")
+async def create_user(request: Request):
+    """
+    Create a user with email already confirmed via Supabase Admin API.
+    This bypasses the email confirmation requirement.
+    """
+    try:
+        # Get environment variables
+        SUPABASE_URL = os.environ.get("SUPABASE_URL")
+        SUPABASE_SERVICE_ROLE = os.environ.get("SUPABASE_SERVICE_ROLE")
+        
+        if not SUPABASE_URL or not SUPABASE_SERVICE_ROLE:
+            raise HTTPException(
+                status_code=500, 
+                detail="Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE environment variables"
+            )
+        
+        # Get request body
+        body = await request.json()
+        email = body.get("email")
+        password = body.get("password")
+        
+        if not email or not password:
+            raise HTTPException(
+                status_code=400, 
+                detail="email and password required"
+            )
+        
+        # Prepare the admin API call to Supabase
+        admin_endpoint = f"{SUPABASE_URL}/auth/v1/admin/users"
+        headers = {
+            "Content-Type": "application/json",
+            "apikey": SUPABASE_SERVICE_ROLE,
+            "Authorization": f"Bearer {SUPABASE_SERVICE_ROLE}",
+        }
+        
+        payload = {
+            "email": email,
+            "password": password,
+            "email_confirm": True,  # Set to true so no confirmation email is required
+            "user_metadata": {"source": "web-signup"}
+        }
+        
+        # Make the request to Supabase Admin API
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            response = await client.post(admin_endpoint, headers=headers, json=payload)
+        
+        if response.status_code not in (200, 201):
+            error_detail = f"Supabase admin error: {response.text}"
+            raise HTTPException(status_code=500, detail=error_detail)
+        
+        user_data = response.json()
+        
+        return {
+            "ok": True, 
+            "user": user_data,
+            "message": "User created successfully with email confirmed"
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"User creation failed: {str(e)}")
